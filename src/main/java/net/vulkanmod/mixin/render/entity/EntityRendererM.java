@@ -11,6 +11,7 @@ import net.vulkanmod.render.chunk.WorldRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(EntityRenderer.class)
 public class EntityRendererM<T extends Entity> {
