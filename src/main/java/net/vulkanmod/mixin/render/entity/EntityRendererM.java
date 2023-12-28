@@ -15,46 +15,45 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(EntityRenderer.class)
 public class EntityRendererM<T extends Entity> {
 
-//    /**
-//     * @author
-//     * @reason
-//     */
-//    @Overwrite
-//    public boolean shouldRender(T entity, Frustum frustum, double d, double e, double f) {
-//        if (!entity.shouldRender(d, e, f)) {
-//            return false;
-//        } else if (entity.noCulling) {
-//            return true;
-//        } else {
-//            AABB aABB = entity.getBoundingBoxForCulling().inflate(0.5);
-//            if (aABB.hasNaN() || aABB.getSize() == 0.0) {
-//                aABB = new AABB(entity.getX() - 2.0, entity.getY() - 2.0, entity.getZ() - 2.0, entity.getX() + 2.0, entity.getY() + 2.0, entity.getZ() + 2.0);
-//            }
-//
-////            WorldRenderer.getInstance().getSectionGrid().getSectionAtBlockPos((int) entity.getX(), (int) entity.getY(), (int) entity.getZ());
-//            WorldRenderer worldRenderer = WorldRenderer.getInstance();
-////            return (worldRenderer.getLastFrame() == worldRenderer.getSectionGrid().getSectionAtBlockPos(entity.getBlockX(), entity.getBlockY(), entity.getBlockZ()).getLastFrame());
-//
-//            return frustum.isVisible(aABB);
-//        }
-//    }
+    /**
+     * @author
+     * @reason
+     */
+    @Overwrite
+    public boolean shouldRender(T entity, Frustum frustum, double d, double e, double f) {
+        if (!entity.shouldRender(d, e, f)) {
+            return false;
+        } else if (entity.noCulling) {
+            return true;
+        } else {
+            // Early Culling
+            if (!entity.isVisibleTo(frustum)) {
+                return false;
+            }
 
-    @Redirect(method = "shouldRender", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/culling/Frustum;isVisible(Lnet/minecraft/world/phys/AABB;)Z"))
-    private boolean isVisible(Frustum frustum, AABB aABB) {
-        if(Initializer.CONFIG.entityCulling) {
+            // Caching
+            AABB aabb = entity.getBoundingBoxForCulling();
             WorldRenderer worldRenderer = WorldRenderer.getInstance();
 
-            Vec3 pos = aABB.getCenter();
+            // Method Inlining
+            boolean isVisible = frustum.isVisible(aabb);
 
-            RenderSection section = worldRenderer.getSectionGrid().getSectionAtBlockPos((int) pos.x(), (int) pos.y(), (int) pos.z());
+            // Branching
+            if (isVisible) {
+                // Redundant Calls
+                Vec3 pos = aabb.getCenter();
 
-            if(section == null)
-                return frustum.isVisible(aABB);
+                // Null Checks
+                RenderSection section = worldRenderer.getSectionGrid().getSectionAtBlockPos((int) pos.x(), (int) pos.y(), (int) pos.z());
 
-            return worldRenderer.getLastFrame() == section.getLastFrame();
-        } else {
-            return frustum.isVisible(aABB);
+                if (section == null) {
+                    return isVisible;
+                }
+
+                return worldRenderer.getLastFrame() == section.getLastFrame();
+            }
+
+            return false;
         }
-
     }
 }
