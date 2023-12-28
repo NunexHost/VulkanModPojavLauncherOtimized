@@ -8,6 +8,7 @@ import net.minecraft.world.phys.Vec3;
 import net.vulkanmod.Initializer;
 import net.vulkanmod.render.chunk.RenderSection;
 import net.vulkanmod.render.chunk.WorldRenderer;
+import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(EntityRenderer.class)
 public class EntityRendererM<T extends Entity> {
